@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -209,4 +210,7 @@ retryConnectionFailure limit n = \case
     FailedConnectionException  {} -> True
     FailedConnectionException2 {} -> True
     TlsException               {} -> True
+#if MIN_VERSION_http_client(0,4,24)
+    TlsExceptionHostPort {}       -> True
+#endif
     _                             -> False

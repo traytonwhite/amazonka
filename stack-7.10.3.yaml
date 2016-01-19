@@ -1,8 +1,6 @@
-resolver:   nightly-2015-09-10
+resolver:   lts-3.22
 flags:      {}
-extra-deps:
-  - groom-0.1.2
-  - retry-0.7.1
+extra-deps: []
 packages:
   - core
   - test

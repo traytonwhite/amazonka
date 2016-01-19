@@ -62,6 +62,7 @@ library
         , conduit-extra       >= 1.1
         , directory           >= 1.2
         , exceptions          >= 0.6
+        , http-client         >= 0.3.6
         , http-conduit        >= 2.1.4
         , ini                 >= 0.2
         , mmorph              >= 1
