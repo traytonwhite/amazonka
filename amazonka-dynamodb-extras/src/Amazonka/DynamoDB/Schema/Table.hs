@@ -68,15 +68,6 @@ data Table
 type instance DynamoName   (Table n a t s is)   = n
 type instance HasAttribute (Table n a t s is) b = HasAttributes a (Attribute b)
 
--- create :: DynamoTable a => Proxy a -> CreateTable
--- create = getCreateTable
-
--- -- | Get the DynamoDB table name.
--- getTableName :: forall n a t s is. KnownSymbol n
---              => Proxy (Table n a t s is)
---              -> Text
--- getTableName _ = symbolToText (Proxy :: Proxy n)
-
 -- | Get the differences between two 'Table' schemas as an 'UpdateTable' request.
 diffSchema :: (DynamoTable a, DynamoTable b)
            => Proxy a
@@ -84,28 +75,11 @@ diffSchema :: (DynamoTable a, DynamoTable b)
            -> UpdateTable
 diffSchema _ _ = undefined
 
--- | Get the differences between two 'TableDescription's as an 'UpdateTable' request.
-diffDescription :: TableDescription
+diffDescription :: DynamoTable a
+                => Proxy a
                 -> TableDescription
                 -> UpdateTable
 diffDescription _ _ = undefined
-
--- update :: (DynamoTable a, DynamoTable b)
---        => Proxy a
---        -> Proxy b
--- Get old table description? Actually run operations?
---        -> UpdateTable
--- update a b = convert . getCreateTable
---   where
---     convert x =
-
---     old = getCreateTable a
---     new = getCreateTable b
-
--- type family IsTableAttribute a (b :: *) :: Constraint where
---     IsTableAttribute (Table n a t s is) b = HasAttributes a (Attribute b)
-
-type instance HasAttribute (Table n a t s is) b = HasAttributes a (Attribute b)
 
 
 class ( DynamoAttributes a
