@@ -29,7 +29,6 @@ import           Gen.AST.Data
 import           Gen.AST.Override
 import           Gen.AST.Prefix
 import           Gen.AST.Subst
-import           Gen.Types.TypeOf
 import           Gen.Formatting
 import           Gen.Types
 
@@ -164,7 +163,7 @@ type MemoS a = StateT (Map Id a) (Either Error)
 
 -- | Filter the ids representing operation input/outputs from the supplied map,
 -- and attach the associated shape to the appropriate operation.
-separate :: (Show a, HasRelation a)
+separate :: (Show a, IsStreaming a, HasRelation a)
          => Map Id (Operation Identity (RefF b) c)
          -> Map Id a
          -> Either Error
@@ -173,7 +172,7 @@ separate :: (Show a, HasRelation a)
                 )
 separate os = runStateT (traverse go os)
   where
-    go :: (HasRelation b)
+    go :: (IsStreaming b, HasRelation b)
        => Operation Identity (RefF a) c
        -> MemoS b (Operation Identity (RefF b) c)
     go o = do
@@ -181,8 +180,8 @@ separate os = runStateT (traverse go os)
         y <- remove Output (outputName o)
 
         return $! o
-            { _opInput  = Identity (o ^. opInput  . _Identity & refAnn .~ x)
-            , _opOutput = Identity (o ^. opOutput . _Identity & refAnn .~ y)
+            { _opInput  = Identity $ o ^. opInput  . _Identity & refAnn .~ x
+            , _opOutput = Identity $ o ^. opOutput . _Identity & refAnn .~ y
             }
 
     remove :: HasRelation a => Direction -> Id -> MemoS a a

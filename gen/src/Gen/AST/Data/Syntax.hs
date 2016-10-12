@@ -77,10 +77,15 @@ toXMap, toQMap :: Exp
 toXMap  = var "toXMLMap"
 toQMap  = var "toQueryMap"
 
+typeN :: Id -> Type
+typeN x = foldl' TyApp (tycon n) (map (TyVar . Symbol . (:[])) vs)
+  where
+    (n, vs) = typeVarId x
+
 ctorS :: HasMetadata a Identity => a -> Id -> [Field] -> Decl
 ctorS m n fs = TypeSig noLoc [ident (smartCtorId n)] ty
   where
-    ty = foldr' TyFun (tycon (typeId n)) ps
+    ty = foldr' TyFun (typeN n) ps
     ps = map (external m) (filter fieldIsParam fs)
 
 ctorD :: Id -> [Field] -> Decl
@@ -142,11 +147,13 @@ errorD n s c = sfun noLoc (ident n) [] (UnGuardedRhs rhs) noBinds
     code     = app (var "hasCode")   (str c)
 
 dataD :: Id -> [QualConDecl] -> [Derive] -> Decl
-dataD n fs cs = DataDecl noLoc arity [] (ident (typeId n)) [] fs ds
+dataD n fs cs = DataDecl noLoc arity [] (ident (typeId n)) vars fs ds
   where
     arity = case fs of
         [QualConDecl _ _ _ (RecDecl _ [_])] -> NewType
         _                                   -> DataType
+
+    vars = map (UnkindedVar . Ident . (:[])) $ snd (typeVarId n)
 
     ds = map ((,[]) . UnQual . Ident) (mapMaybe derivingName cs)
 
@@ -746,7 +753,7 @@ directed :: (HasMetadata a Identity, TypeOf b)
          -> b
          -> Type
 directed i m d (typeOf -> t) = case t of
-    TType      x _ -> tycon x
+    TType      n _ -> typeN n
     TLit       x   -> literal i (m ^. timestampFormat . _Identity) x
     TNatural       -> tycon nat
     TStream        -> tycon stream
@@ -778,8 +785,8 @@ directed i m d (typeOf -> t) = case t of
         | otherwise = TyApp (TyApp (tycon "HashMap") (go k)) (go v)
 
     stream = case d of
-        Nothing         -> "RsBody"
-        Just Output     -> "RsBody"     -- ^ Response stream.
+        Nothing         -> "a"
+        Just Output     -> "a"          -- ^ Response stream.
         Just Input
             | m ^. signatureVersion == S3
                         -> "RqBody"     -- ^ If the signer supports chunked encoding, both body types are accepted.

@@ -483,9 +483,17 @@ class IsStreaming a where
     isStreaming = view infoStreaming
 
 instance IsStreaming Info
-instance IsStreaming (StructF a)
-instance IsStreaming (ShapeF  a)
-instance IsStreaming (Shape   a)
+
+instance IsStreaming a => IsStreaming (Shape a) where
+    isStreaming (_ :< s) = isStreaming s
+
+instance IsStreaming a => IsStreaming (ShapeF a) where
+    isStreaming = \case
+        Struct st -> isStreaming st
+        s         -> view infoStreaming s
+
+instance IsStreaming a => IsStreaming (StructF a) where
+    isStreaming st = view infoStreaming st || any isStreaming (_members st)
 
 instance IsStreaming a => IsStreaming (RefF a) where
     isStreaming r = _refStreaming r || isStreaming (_refAnn r)
@@ -493,6 +501,18 @@ instance IsStreaming a => IsStreaming (RefF a) where
 instance IsStreaming TType where
     isStreaming TStream = True
     isStreaming _       = False
+
+instance IsStreaming Solved where
+    isStreaming = isStreaming . view annType
+
+instance IsStreaming Prefixed where
+    isStreaming = const False
+
+instance IsStreaming Related where
+    isStreaming = const False
+
+instance IsStreaming () where
+    isStreaming = const False
 
 setRequired :: ([Id] -> [Id]) -> ShapeF a -> ShapeF a
 setRequired f = _Struct . required' %~ nub . f

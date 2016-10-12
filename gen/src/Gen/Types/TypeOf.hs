@@ -26,14 +26,14 @@ module Gen.Types.TypeOf
     , typeDefault
     ) where
 
-import           Control.Comonad.Cofree
-import           Control.Lens           hiding ((:<), List, enum, mapping, (??))
-import           Data.Foldable          (foldr')
-import           Data.List              (intersect, nub, sort)
-import           Data.Monoid
-import           Gen.Types.Ann
-import           Gen.Types.Id
-import           Gen.Types.Service
+import Control.Comonad.Cofree
+import Control.Lens           hiding ((:<), List, enum, mapping, (??))
+import Data.Foldable          (foldr')
+import Data.List              (intersect, nub, sort)
+import Data.Monoid
+import Gen.Types.Ann
+import Gen.Types.Id
+import Gen.Types.Service
 
 class TypeOf a where
     typeOf :: a -> TType
@@ -44,15 +44,15 @@ instance TypeOf TType where
 instance TypeOf Solved where
     typeOf = _annType
 
-instance HasId a => TypeOf (Shape a) where
+instance (IsStreaming a, HasId a) => TypeOf (Shape a) where
     typeOf (x :< s) = sensitive s (shape s)
       where
         n = identifier x
 
         shape = \case
             Ptr _ t              -> t
-            Struct st            -> TType  (typeId n) (struct st)
-            Enum   {}            -> TType  (typeId n) (enum <> derivingBase)
+            Struct st            -> TType n (struct st)
+            Enum   {}            -> TType n (enum <> derivingBase)
             List (ListF i e)
                 | nonEmpty i     -> TList1 (typeOf e)
                 | otherwise      -> TList  (typeOf e)
@@ -70,7 +70,7 @@ instance HasId a => TypeOf (Shape a) where
             | otherwise      = uniq $
                 foldr' (intersect . derivingOf) derivingBase (st ^.. references)
 
-instance HasId a => TypeOf (RefF (Shape a)) where
+instance (IsStreaming a, HasId a) => TypeOf (RefF (Shape a)) where
     typeOf r
         | isStreaming r = TStream
         | otherwise     = typeOf (r ^. refAnn)
@@ -91,7 +91,7 @@ pointerTo n = \case
     Map (MapF _ k v)     -> TMap   (t (_refShape k)) (t (_refShape v))
     _                    -> t n
   where
-    t x = TType (typeId x) derivingBase
+    t x = TType x derivingBase
 
 derivingOf :: TypeOf a => a -> [Derive]
 derivingOf = uniq . typ . typeOf

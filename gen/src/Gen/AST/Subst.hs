@@ -28,6 +28,7 @@ import           Control.Monad.State
 import qualified Data.HashMap.Strict    as Map
 import           Data.List              (find)
 import qualified Data.Text.Lazy         as LText
+import           Debug.Trace
 import           Gen.AST.Override
 import           Gen.Formatting
 import           Gen.Types
@@ -68,11 +69,12 @@ substitute svc@Service{..} = do
     operation :: Operation Maybe (RefF ()) a
               -> MemoS Related (Operation Identity (RefF ()) a)
     operation o@Operation{..} = do
-        inp <- subst Input  (name Input  _opName) _opInput
-        out <- subst Output (name Output _opName) _opOutput
+        let inpn = name Input  _opName
+            outn = name Output _opName & variables <>~ ['a']
+        inp <- subst Input  inpn _opInput
+        out <- subst Output outn _opOutput
         return $! o
-            { _opDocumentation =
-                _opDocumentation .! "Undocumented operation."
+            { _opDocumentation = _opDocumentation .! "Undocumented operation."
             , _opHTTP          = http _opHTTP
             , _opInput         = Identity inp
             , _opOutput        = Identity out

@@ -19,10 +19,12 @@ module Gen.Types.Id
     -- * Identifier
     , Id
     , mkId
+    , variables
 
     -- * Lenses
     , memberId
     , typeId
+    , typeVarId
     , ctorId
     , branchId
     , smartCtorId
@@ -57,14 +59,14 @@ instance (Functor f, HasId a) => HasId (Cofree f a) where
 
 -- | A type where the actual identifier is immutable,
 -- but the usable representation can be appended/modified.
-data Id = Id Text Text
+data Id = Id Text Text [Char]
     deriving (Show)
 
 instance Eq Id where
-    Id x _ == Id y _ = x == y
+    Id x _ _ == Id y _ _ = x == y
 
 instance Hashable Id where
-    hashWithSalt n (Id x _) = hashWithSalt n x
+    hashWithSalt n (Id x _ _) = hashWithSalt n x
 
 instance FromJSON Id where
     parseJSON = withText "id" (pure . mkId)
@@ -73,34 +75,42 @@ instance ToJSON Id where
     toJSON = toJSON . view representation
 
 mkId :: Text -> Id
-mkId t = Id t (format t)
+mkId t = Id t (format t) []
 
 format :: Text -> Text
 format = upperHead . upperAcronym
 
+variables :: Lens' Id [Char]
+variables =
+    lens (\(Id _ _ xs)   -> xs)
+         (\(Id x t _) xs -> Id x t xs)
+
 representation :: Lens' Id Text
 representation =
-    lens (\(Id _ t)   -> t)
-         (\(Id x _) t -> Id x (format t))
+    lens (\(Id _ t _)    -> t)
+         (\(Id x _ xs) t -> Id x (format t) xs)
 
 memberId :: Id -> Text
-memberId (Id x _) = x
+memberId (Id x _ _) = x
 
 typeId :: Id -> Text
 typeId = view representation
 
+typeVarId :: Id -> (Text, [Char])
+typeVarId n = (view representation n, view variables n)
+
 ctorId :: Id -> Text
-ctorId = (`Text.snoc` '\'') . typeId
+ctorId = (`Text.snoc` '\'') . view representation
 
 branchId :: Maybe Text -> Id -> Text
-branchId p = f . typeId
+branchId p = f . view representation
   where
     f :: Text -> Text
     f | Just x <- p = mappend (upperHead x)
       | otherwise   = id
 
 smartCtorId :: Id -> Text
-smartCtorId = renameReserved . lowerHead . lowerFirstAcronym . typeId
+smartCtorId = renameReserved . lowerHead . lowerFirstAcronym . view representation
 
 accessorId :: Maybe Text -> Id -> Text
 accessorId p = Text.cons '_' . accessor p
