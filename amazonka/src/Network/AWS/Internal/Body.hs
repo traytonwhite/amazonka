@@ -25,9 +25,9 @@ import           System.IO
 getFileSize :: MonadIO m => FilePath -> m Integer
 getFileSize f = liftIO (withBinaryFile f ReadMode hFileSize)
 
--- | Connect a 'Sink' to a response stream.
-sinkBody :: MonadResource m => RsBody -> Sink ByteString m a -> m a
-sinkBody (RsBody s) sink = hoist liftResourceT s $$+- sink
+-- -- | Connect a 'Sink' to a response stream.
+-- sinkBody :: MonadResource m => RsBody -> Sink ByteString m a -> m a
+-- sinkBody (RsBody s) sink = hoist liftResourceT s $$+- sink
 
 -- | Construct a 'HashedBody' from a 'FilePath', calculating the 'SHA256' hash
 -- and file size.
@@ -41,7 +41,7 @@ hashedFile :: MonadIO m => FilePath -> m HashedBody
 hashedFile f = liftIO $ HashedStream
     <$> runResourceT (Conduit.sourceFile f $$ sinkSHA256)
     <*> getFileSize f
-    <*> pure (Conduit.sourceFile f)
+    <*> undefined -- pure (Conduit.sourceFile f)
 
 -- | Construct a 'HashedBody' from a source, manually specifying the
 -- 'SHA256' hash and file size.
@@ -51,7 +51,7 @@ hashedBody :: Digest SHA256
            -> Integer
            -> Source (ResourceT IO) ByteString
            -> HashedBody
-hashedBody h n = HashedStream h n
+hashedBody h n _ = HashedStream h n undefined
 
 -- | Something something.
 --
@@ -84,7 +84,7 @@ unsafeChunkedBody :: ChunkSize
                   -> Integer
                   -> Source (ResourceT IO) ByteString
                   -> RqBody
-unsafeChunkedBody c n = Chunked . ChunkedBody c n
+unsafeChunkedBody c n _ = Chunked (ChunkedBody c n undefined)
 
 -- Uses hGet with a specific buffer size, instead of hGetSome.
 sourceFileChunks :: MonadResource m

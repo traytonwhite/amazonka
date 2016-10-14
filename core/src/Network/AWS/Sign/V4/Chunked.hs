@@ -28,8 +28,6 @@ import           Control.Applicative
 import qualified Data.ByteString             as BS
 import           Data.ByteString.Builder
 import qualified Data.ByteString.Char8       as BS8
-import           Data.Conduit
-import           Data.Maybe
 import           Data.Monoid
 import           Network.AWS.Data.Body
 import           Network.AWS.Data.ByteString
@@ -51,18 +49,15 @@ chunked c rq a r ts = signRequest meta (toRequestBody body) auth
     prepare = rqHeaders <>~
         [ (hContentEncoding,         "aws-chunked")
         , (hAMZDecodedContentLength, toBS (_chunkedLength c))
-        , (hContentLength,           toBS (metadataLength   c))
+        , (hContentLength,           toBS (metadataLength c))
         ]
 
-    body = Chunked (c `fuseChunks` sign (metaSignature meta))
+    body = Chunked (scanChunks sign (metaSignature meta) c)
 
-    sign :: Monad m => Signature -> Conduit ByteString m ByteString
-    sign prev = do
-        mx <- await
-        let next = chunkSignature prev (fromMaybe mempty mx)
-        case mx of
-            Nothing -> yield (chunkData next mempty)
-            Just x  -> yield (chunkData next x) >> sign next
+    sign :: Signature -> ByteString -> (Signature, ByteString)
+    sign prev bs = (next, chunkData next bs)
+      where
+        next = chunkSignature prev bs
 
     chunkData next x = toBS
          $ word64Hex  (fromIntegral (BS.length x))

@@ -6,7 +6,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE PackageImports             #-}
+{-# LANGUAGE ViewPatterns               #-}
 
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 
@@ -20,44 +20,34 @@
 --
 module Network.AWS.Data.Body where
 
-import           Control.Monad.Trans.Resource
-import           Data.Aeson
-import qualified Data.ByteString              as BS
-import           Data.ByteString.Builder      (Builder)
-import qualified Data.ByteString.Char8        as BS8
-import qualified Data.ByteString.Lazy         as LBS
-import qualified Data.ByteString.Lazy.Char8   as LBS8
-import           Data.Conduit
-import           Data.HashMap.Strict          (HashMap)
-import           Data.Monoid
-import           Data.String
-import           Data.Text                    (Text)
-import qualified Data.Text.Encoding           as Text
-import qualified Data.Text.Lazy               as LText
-import qualified Data.Text.Lazy.Encoding      as LText
-import           Network.AWS.Data.ByteString
-import           Network.AWS.Data.Crypto
-import           Network.AWS.Data.Log
-import           Network.AWS.Data.Query       (QueryString)
-import           Network.AWS.Data.XML         (encodeXML)
-import           Network.AWS.Lens             (AReview, Lens', lens, to, un)
-import           Network.HTTP.Conduit
-import           Text.XML                     (Element)
+import Data.Aeson
+import Data.ByteString.Builder (Builder)
+import Data.HashMap.Strict     (HashMap)
+import Data.Monoid
+import Data.String
+import Data.Text               (Text)
+
+import Network.AWS.Data.ByteString
+import Network.AWS.Data.Crypto
+import Network.AWS.Data.Log
+import Network.AWS.Data.Query      (QueryString)
+import Network.AWS.Data.XML        (encodeXML)
+import Network.AWS.Lens            (AReview, Lens', lens, to, un)
+import Network.HTTP.Client         (GivesPopper, RequestBody (..))
+
+import Text.XML (Element)
+
+import qualified Data.ByteString            as BS
+import qualified Data.ByteString.Builder    as Build
+import qualified Data.ByteString.Char8      as BS8
+import qualified Data.ByteString.Lazy       as LBS
+import qualified Data.ByteString.Lazy.Char8 as LBS8
+import qualified Data.IORef                 as Ref
+import qualified Data.Text.Encoding         as Text
+import qualified Data.Text.Lazy             as LText
+import qualified Data.Text.Lazy.Encoding    as LText
 
 default (Builder)
-
--- | A streaming, exception safe response body.
-newtype RsBody = RsBody
-    { _streamBody :: ResumableSource (ResourceT IO) ByteString
-    } -- newtype for show/orhpan instance purposes.
-
-instance Show RsBody where
-    show = const "RsBody { ResumableSource (ResourceT IO) ByteString }"
-
-fuseStream :: RsBody
-           -> Conduit ByteString (ResourceT IO) ByteString
-           -> RsBody
-fuseStream b f = b { _streamBody = _streamBody b $=+ f }
 
 -- | Specifies the transmitted size of the 'Transfer-Encoding' chunks.
 --
@@ -84,14 +74,11 @@ defaultChunkSize = 128 * 1024
 data ChunkedBody = ChunkedBody
     { _chunkedSize   :: !ChunkSize
     , _chunkedLength :: !Integer
-    , _chunkedBody   :: Source (ResourceT IO) ByteString
+    , _chunkedBody   :: GivesPopper ()
     }
 
 chunkedLength :: Lens' ChunkedBody Integer
 chunkedLength = lens _chunkedLength (\s a -> s { _chunkedLength = a })
-
--- Maybe revert to using Source's, and then enforce the chunk size
--- during conversion from HashedBody -> ChunkedBody
 
 instance Show ChunkedBody where
     show c = BS8.unpack . toBS $ build
@@ -105,10 +92,40 @@ instance Show ChunkedBody where
         <> build (remainderBytes c)
         <> "}"
 
-fuseChunks :: ChunkedBody
-           -> Conduit ByteString (ResourceT IO) ByteString
+scanChunks :: (a -> ByteString -> (a, ByteString))
+           -> a
            -> ChunkedBody
-fuseChunks c f = c { _chunkedBody = _chunkedBody c =$= f }
+           -> ChunkedBody
+scanChunks f initial body =
+    body { _chunkedBody = popChunks (_chunkedSize body) (_chunkedBody body) }
+  where
+    popChunks :: ChunkSize -> GivesPopper () -> GivesPopper ()
+    popChunks (fromIntegral -> size) givesPopper needsPopper = do
+        builder <- readAll givesPopper
+        ref     <- Ref.newIORef (initial, Build.toLazyByteString builder)
+        needsPopper (popper ref)
+      where
+        popper ref = do
+            (prev, remainder) <- Ref.readIORef ref
+            if LBS.null remainder
+                then pure mempty
+                else do
+                    let (chunk, rest) = LBS.splitAt size remainder
+                        (next,  bs)   = f prev (LBS.toStrict chunk)
+                    Ref.writeIORef ref (next, rest)
+                    pure bs
+
+    readAll :: GivesPopper () -> IO Builder
+    readAll givesPopper = do
+        ref <- Ref.newIORef mempty
+        givesPopper (loop ref mempty)
+        Ref.readIORef ref
+      where
+        loop ref acc reader = do
+            bs <- reader
+            if BS.null bs
+                then Ref.writeIORef ref acc
+                else loop ref (acc <> Build.byteString bs) reader
 
 fullChunks :: ChunkedBody -> Integer
 fullChunks c = _chunkedLength c `div` fromIntegral (_chunkedSize c)
@@ -121,7 +138,7 @@ remainderBytes c =
 
 -- | An opaque request body containing a 'SHA256' hash.
 data HashedBody
-    = HashedStream (Digest SHA256) !Integer (Source (ResourceT IO) ByteString)
+    = HashedStream (Digest SHA256) !Integer (GivesPopper ())
     | HashedBytes  (Digest SHA256) ByteString
 
 instance Show HashedBody where
@@ -165,9 +182,9 @@ isStreaming = \case
 
 toRequestBody :: RqBody -> RequestBody
 toRequestBody = \case
-    Chunked x -> requestBodySourceChunked (_chunkedBody x)
+    Chunked x -> RequestBodyStreamChunked (_chunkedBody x)
     Hashed  x -> case x of
-         HashedStream _ n f -> requestBodySource (fromIntegral n) f
+         HashedStream _ n f -> RequestBodyStream (fromIntegral n) f
          HashedBytes  _ b   -> RequestBodyBS b
 
 contentLength :: RqBody -> Integer

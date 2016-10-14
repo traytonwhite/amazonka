@@ -88,7 +88,7 @@ module Network.AWS
     , unsafeChunkedBody
 
     -- *** Response Bodies
-    , sinkBody
+--    , sinkBody undefined
 
     -- *** File Size and MD5/SHA256
     , getFileSize
@@ -143,7 +143,6 @@ module Network.AWS
     , RqBody
     , HashedBody
     , ChunkedBody
-    , RsBody
     ) where
 
 import           Control.Applicative
@@ -178,6 +177,7 @@ import           Network.AWS.Pager            (AWSPager)
 import           Network.AWS.Prelude
 import           Network.AWS.Types            hiding (LogLevel (..))
 import           Network.AWS.Waiter           (Wait)
+import           Network.HTTP.Client          (BodyReader)
 
 -- | A specialisation of the 'AWST' transformer.
 type AWS = AWST (ResourceT IO)
@@ -249,12 +249,12 @@ timeout :: MonadAWS m => Seconds -> AWS a -> m a
 timeout s = liftAWS . AWST.timeout s
 
 -- | Send a request, returning the associated response if successful.
-send :: (MonadAWS m, AWSRequest a) => a -> m (Rs a)
+send :: (MonadAWS m, AWSRequest a) => a -> m (Rs a BodyReader)
 send = liftAWS . AWST.send
 
 -- | Repeatedly send a request, automatically setting markers and
 -- paginating over multiple responses while available.
-paginate :: (MonadAWS m, AWSPager a) => a -> Source m (Rs a)
+paginate :: (MonadAWS m, AWSPager a) => a -> Source m (Rs a BodyReader)
 paginate = hoist liftAWS . AWST.paginate
 
 -- | Poll the API with the supplied request until a specific 'Wait' condition

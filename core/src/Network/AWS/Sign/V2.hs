@@ -16,21 +16,24 @@ module Network.AWS.Sign.V2
     ( v2
     ) where
 
-import           Control.Applicative
-import qualified Data.ByteString.Char8       as BS8
-import           Data.Monoid
-import           Data.Time
-import           Network.AWS.Data.Body
-import           Network.AWS.Data.ByteString
-import           Network.AWS.Data.Crypto
-import           Network.AWS.Data.Headers
-import           Network.AWS.Data.Log
-import           Network.AWS.Data.Path
-import           Network.AWS.Data.Query
-import           Network.AWS.Data.Time
-import           Network.AWS.Types
-import qualified Network.HTTP.Conduit        as Client
-import           Network.HTTP.Types          hiding (toQuery)
+import Control.Applicative
+
+import Data.Monoid
+import Data.Time
+
+import Network.AWS.Data.Body
+import Network.AWS.Data.ByteString
+import Network.AWS.Data.Crypto
+import Network.AWS.Data.Headers
+import Network.AWS.Data.Log
+import Network.AWS.Data.Path
+import Network.AWS.Data.Query
+import Network.AWS.Data.Time
+import Network.AWS.Types
+import Network.HTTP.Types          hiding (toQuery)
+
+import qualified Data.ByteString.Char8 as BS8
+import qualified Network.HTTP.Client   as Client
 
 data V2 = V2
     { metaTime      :: !UTCTime

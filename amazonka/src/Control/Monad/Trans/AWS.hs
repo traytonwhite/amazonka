@@ -91,7 +91,7 @@ module Control.Monad.Trans.AWS
     , unsafeChunkedBody
 
     -- *** Response Bodies
-    , sinkBody
+--    , sinkBody undefined
 
     -- *** File Size and MD5/SHA256
     , getFileSize
@@ -147,7 +147,6 @@ module Control.Monad.Trans.AWS
     , RqBody
     , HashedBody
     , ChunkedBody
-    , RsBody
     ) where
 
 import           Control.Applicative
@@ -178,6 +177,7 @@ import qualified Network.AWS.Presign          as Sign
 import           Network.AWS.Request          (requestURL)
 import           Network.AWS.Types            hiding (LogLevel (..))
 import           Network.AWS.Waiter           (Accept, Wait)
+import           Network.HTTP.Client          (BodyReader)
 
 type AWST = AWST' Env
 
@@ -264,7 +264,7 @@ type AWSConstraint r m =
 -- Throws 'Error'.
 send :: (AWSConstraint r m, AWSRequest a)
      => a
-     -> m (Rs a)
+     -> m (Rs a BodyReader)
 send = retrier >=> fmap snd . hoistError
 
 -- | Repeatedly send a request, automatically setting markers and
@@ -273,7 +273,7 @@ send = retrier >=> fmap snd . hoistError
 -- Throws 'Error'.
 paginate :: (AWSConstraint r m, AWSPager a)
          => a
-         -> Source m (Rs a)
+         -> Source m (Rs a BodyReader)
 paginate = go
   where
     go !x = do

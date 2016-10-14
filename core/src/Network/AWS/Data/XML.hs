@@ -15,25 +15,32 @@
 --
 module Network.AWS.Data.XML where
 
-import           Control.Applicative
-import           Control.Monad
-import           Data.Bifunctor
-import qualified Data.ByteString.Lazy        as LBS
-import           Data.Conduit
-import           Data.Conduit.Lazy           (lazyConsume)
-import qualified Data.Conduit.List           as Conduit
-import           Data.Maybe
-import           Data.Monoid
-import           Data.Traversable            (traverse)
-import           Data.XML.Types              (Event (..))
-import           GHC.Exts
-import           Network.AWS.Data.ByteString
-import           Network.AWS.Data.Text
-import           Numeric.Natural
-import           System.IO.Unsafe            (unsafePerformIO)
-import           Text.XML
-import qualified Text.XML.Stream.Render      as Stream
-import           Text.XML.Unresolved         (toEvents)
+import Control.Applicative
+import Control.Monad
+
+import Data.Bifunctor
+import Data.Conduit
+import Data.Conduit.Lazy (lazyConsume)
+import Data.Maybe
+import Data.Monoid
+import Data.Traversable  (traverse)
+import Data.XML.Types    (Event (..))
+
+import GHC.Exts
+
+import Network.AWS.Data.ByteString
+import Network.AWS.Data.Text
+
+import Numeric.Natural
+
+import System.IO.Unsafe (unsafePerformIO)
+
+import Text.XML
+import Text.XML.Unresolved (toEvents)
+
+import qualified Data.ByteString.Lazy   as LBS
+import qualified Data.Conduit.List      as Conduit
+import qualified Text.XML.Stream.Render as Stream
 
 infixl 7 .@, .@?
 

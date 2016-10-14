@@ -75,6 +75,8 @@ library
         , transformers-base   >= 0.4
         , transformers-compat >= 0.3
 
+        , http-client
+
 test-suite tests
     type:              exitcode-stdio-1.0
     default-language:  Haskell2010

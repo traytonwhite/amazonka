@@ -15,29 +15,32 @@
 --
 module Network.AWS.Data.Log where
 
+import Data.ByteString.Builder (Builder)
+import Data.CaseInsensitive    (CI)
+import Data.Int
+import Data.List               (intersperse)
+import Data.Monoid
+import Data.Time               (UTCTime)
+import Data.Word
+
+import Network.AWS.Data.ByteString
+import Network.AWS.Data.Headers
+import Network.AWS.Data.Path
+import Network.AWS.Data.Query
+import Network.AWS.Data.Text
+import Network.HTTP.Client
+import Network.HTTP.Types
+
+import Numeric
+
 import qualified Data.ByteString              as BS
-import           Data.ByteString.Builder      (Builder)
 import qualified Data.ByteString.Lazy         as LBS
 import qualified Data.ByteString.Lazy.Builder as Build
-import           Data.CaseInsensitive         (CI)
 import qualified Data.CaseInsensitive         as CI
-import           Data.Int
-import           Data.List                    (intersperse)
-import           Data.Monoid
 import qualified Data.Text                    as Text
 import qualified Data.Text.Encoding           as Text
 import qualified Data.Text.Lazy               as LText
 import qualified Data.Text.Lazy.Encoding      as LText
-import           Data.Time                    (UTCTime)
-import           Data.Word
-import           Network.AWS.Data.ByteString
-import           Network.AWS.Data.Headers
-import           Network.AWS.Data.Path
-import           Network.AWS.Data.Query
-import           Network.AWS.Data.Text
-import           Network.HTTP.Conduit
-import           Network.HTTP.Types
-import           Numeric
 
 class ToLog a where
     -- | Convert a value to a loggable builder.

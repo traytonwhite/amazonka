@@ -31,15 +31,19 @@ module Network.AWS.Waiter
     , nonEmpty
     ) where
 
-import           Control.Applicative
-import           Data.Maybe
-import           Data.Text                   (Text)
-import qualified Data.Text                   as Text
-import           Network.AWS.Data.ByteString
-import           Network.AWS.Data.Log
-import           Network.AWS.Error
-import           Network.AWS.Lens            (Fold, allOf, anyOf, to, (^?))
-import           Network.AWS.Types
+import Control.Applicative
+
+import Data.Maybe
+import Data.Text  (Text)
+
+import Network.AWS.Data.ByteString
+import Network.AWS.Data.Log
+import Network.AWS.Error
+import Network.AWS.Lens            (Fold, allOf, anyOf, to, (^?))
+import Network.AWS.Types
+import Network.HTTP.Client         (BodyReader)
+
+import qualified Data.Text as Text
 
 type Acceptor a = Request a -> Either Error (Response a) -> Maybe Accept
 
@@ -66,10 +70,10 @@ data Wait a = Wait
 accept :: Wait a -> Acceptor a
 accept w rq rs = listToMaybe . mapMaybe (\f -> f rq rs) $ _waitAcceptors w
 
-matchAll :: Eq b => b -> Accept -> Fold (Rs a) b -> Acceptor a
+matchAll :: Eq p => p -> Accept -> Fold (Rs a BodyReader) p -> Acceptor a
 matchAll x a l = match (allOf l (== x)) a
 
-matchAny :: Eq b => b -> Accept -> Fold (Rs a) b -> Acceptor a
+matchAny :: Eq p => p -> Accept -> Fold (Rs a BodyReader) p -> Acceptor a
 matchAny x a l = match (anyOf l (== x)) a
 
 matchStatus :: Int -> Accept -> Acceptor a
@@ -83,7 +87,7 @@ matchError c a _ = \case
     Left e | Just c == e ^? _ServiceError . serviceCode -> Just a
     _                                                   -> Nothing
 
-match :: (Rs a -> Bool) -> Accept -> Acceptor a
+match :: (Rs a BodyReader -> Bool) -> Accept -> Acceptor a
 match f a _ = \case
     Right (_, rs) | f rs -> Just a
     _                    -> Nothing

@@ -107,7 +107,7 @@ module Network.AWS.Types
     -- * HTTP
     , ClientRequest
     , ClientResponse
-    , ResponseBody
+--    , ResponseBody
     , clientRequest
 
     -- ** Seconds
@@ -121,16 +121,15 @@ module Network.AWS.Types
     ) where
 
 import Control.Applicative
-import Control.Concurrent           (ThreadId)
+import Control.Concurrent     (ThreadId)
 import Control.DeepSeq
 import Control.Exception
 import Control.Monad.IO.Class
-import Control.Monad.Trans.Resource
-import Data.Aeson                   hiding (Error)
-import Data.ByteString.Builder      (Builder)
+
+import Data.Aeson              hiding (Error)
+import Data.ByteString.Builder (Builder)
 import Data.Coerce
-import Data.Conduit
-import Data.Data                    (Data, Typeable)
+import Data.Data               (Data, Typeable)
 import Data.Hashable
 import Data.IORef
 import Data.Maybe
@@ -138,7 +137,9 @@ import Data.Monoid
 import Data.Proxy
 import Data.String
 import Data.Time
-import GHC.Generics                 (Generic)
+
+import GHC.Generics (Generic)
+
 import Network.AWS.Data.Body
 import Network.AWS.Data.ByteString
 import Network.AWS.Data.JSON
@@ -147,26 +148,26 @@ import Network.AWS.Data.Path
 import Network.AWS.Data.Query
 import Network.AWS.Data.Text
 import Network.AWS.Data.XML
-import Network.AWS.Lens             (Iso', Lens', Prism', Setter')
-import Network.AWS.Lens             (exception, iso, lens, prism, sets)
-import Network.HTTP.Conduit         hiding (Proxy, Request, Response)
+import Network.AWS.Lens            (Iso', Lens', Prism', Setter')
+import Network.AWS.Lens            (exception, iso, lens, prism, sets)
+import Network.HTTP.Client         (HttpException)
 import Network.HTTP.Types.Header
 import Network.HTTP.Types.Method
-import Network.HTTP.Types.Status    (Status)
+import Network.HTTP.Types.Status   (Status)
 
-import qualified Data.ByteString      as BS
-import qualified Data.Text            as Text
-import qualified Data.Text.Encoding   as Text
-import qualified Network.HTTP.Conduit as Client
+import qualified Data.ByteString     as BS
+import qualified Data.Text           as Text
+import qualified Data.Text.Encoding  as Text
+import qualified Network.HTTP.Client as Client
 
 -- | A convenience alias to avoid type ambiguity.
 type ClientRequest = Client.Request
 
 -- | A convenience alias encapsulating the common 'Response'.
-type ClientResponse = Client.Response ResponseBody
+type ClientResponse = Client.Response Client.BodyReader
 
--- | A convenience alias encapsulating the common 'Response' body.
-type ResponseBody = ResumableSource (ResourceT IO) ByteString
+-- -- | A convenience alias encapsulating the common 'Response' body.
+-- type ResponseBody = ResumableSource (ResourceT IO) ByteString
 
 -- | Abbreviated service name.
 newtype Abbrev = Abbrev Text
@@ -487,20 +488,19 @@ rqSign x = sgSign (_svcSigner (_rqService x)) x
 rqPresign :: Seconds -> Algorithm a
 rqPresign ex x = sgPresign (_svcSigner (_rqService x)) ex x
 
-type Response a = (Status, Rs a)
+type Response a = (Status, Rs a Client.BodyReader)
 
 -- | Specify how a request can be de/serialised.
 class AWSRequest a where
     -- | The successful, expected response associated with a request.
-    type Rs a :: *
+    type Rs a :: * -> *
 
     request  :: a -> Request a
-    response :: MonadResource m
-             => Logger
+    response :: Logger
              -> Service
-             -> Proxy a -- For injectivity reasons.
+             -> Proxy a
              -> ClientResponse
-             -> m (Response a)
+             -> IO (Response a)
 
 -- | Access key credential.
 newtype AccessKey = AccessKey ByteString

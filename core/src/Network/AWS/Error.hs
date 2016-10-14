@@ -14,20 +14,24 @@ module Network.AWS.Error where
 
 import Control.Applicative
 import Control.Monad
+
 import Data.Aeson
-import Data.Aeson.Types            (parseEither)
+import Data.Aeson.Types (parseEither)
 import Data.Maybe
 import Data.Monoid
+
 import Network.AWS.Data.ByteString
 import Network.AWS.Data.Headers
 import Network.AWS.Data.Text
 import Network.AWS.Data.XML
 import Network.AWS.Lens            (Choice, Getting, Optic', filtered)
 import Network.AWS.Types
-import Network.HTTP.Conduit
-import Network.HTTP.Types.Status   (Status (..))
+import Network.HTTP.Client         (HttpException (..),
+                                    HttpExceptionContent (..))
+import Network.HTTP.Types          (ResponseHeaders, Status (..))
 
 import qualified Data.ByteString.Lazy as LBS
+import qualified Network.HTTP.Client  as Client
 
 statusSuccess :: Status -> Bool
 statusSuccess (statusCode -> n) = n >= 200 && n < 300
@@ -37,8 +41,10 @@ httpStatus = _Error . f
   where
     f g = \case
         TransportError (HttpExceptionRequest rq (StatusCodeException rs b))
-            -> (\x -> TransportError (HttpExceptionRequest rq (StatusCodeException (rs { responseStatus = x }) b)))
-               <$> g (responseStatus rs)
+            -> (\x ->
+                   let err = StatusCodeException (rs { Client.responseStatus = x }) b
+                    in TransportError (HttpExceptionRequest rq err))
+               <$> g (Client.responseStatus rs)
 
         TransportError e
             -> pure (TransportError e)

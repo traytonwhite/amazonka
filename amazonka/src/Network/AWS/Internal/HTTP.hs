@@ -20,23 +20,23 @@ module Network.AWS.Internal.HTTP
     , waiter
     ) where
 
-import           Control.Arrow                (first)
-import           Control.Monad
-import           Control.Monad.Catch
-import           Control.Monad.Reader
-import           Control.Monad.Trans.Resource
-import           Control.Retry
-import           Data.List                    (intersperse)
-import           Data.Monoid
-import           Data.Proxy
-import           Data.Time
-import           Network.AWS.Env
-import           Network.AWS.Internal.Logger
-import           Network.AWS.Lens             ((%~), (&), (^.), (^?))
-import           Network.AWS.Lens             (to, view, _Just)
-import           Network.AWS.Prelude
-import           Network.AWS.Waiter
-import           Network.HTTP.Conduit         hiding (Proxy, Request, Response)
+import Control.Arrow                (first)
+import Control.Monad
+import Control.Monad.Catch
+import Control.Monad.Reader
+import Control.Monad.Trans.Resource
+import Control.Retry
+import Data.List                    (intersperse)
+import Data.Monoid
+import Data.Proxy
+import Data.Time
+import Network.AWS.Env
+import Network.AWS.Internal.Logger
+import Network.AWS.Lens             ((%~), (&), (^.), (^?))
+import Network.AWS.Lens             (to, view, _Just)
+import Network.AWS.Prelude
+import Network.AWS.Waiter
+import Network.HTTP.Conduit         hiding (Proxy, Request, Response)
 
 retrier :: ( MonadCatch m
            , MonadResource m
@@ -133,7 +133,7 @@ perform Env{..} x = catches go handlers
 
         logDebug _envLogger rs -- debug:ClientResponse
 
-        Right <$> response _envLogger (_rqService x) (p x) rs
+        undefined -- Right <$> response _envLogger (_rqService x) (p x) rs
 
     handlers =
         [ Handler $ err
