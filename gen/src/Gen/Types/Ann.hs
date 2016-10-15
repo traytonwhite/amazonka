@@ -40,6 +40,16 @@ data Direction
 
 instance Hashable Direction
 
+data Sharing
+    = Orphan
+    | Singular
+    | Plural
+      deriving (Eq, Show)
+
+instance Monoid Sharing where
+    mempty      = Orphan
+    mappend _ _ = Plural
+
 data Mode
     = Bi
     | Uni !Direction
@@ -50,16 +60,6 @@ instance Monoid Mode where
     mappend (Uni i) (Uni o)
         | i == o            = Uni o
     mappend _       _       = Bi
-
-data Sharing
-    = Orphan
-    | Singular
-    | Plural
-      deriving (Eq, Show)
-
-instance Monoid Sharing where
-    mempty      = Orphan
-    mappend _ _ = Plural
 
 data Relation = Relation
     { _relShared :: !Sharing

@@ -110,10 +110,10 @@ scanChunks f initial body =
             if LBS.null remainder
                 then pure mempty
                 else do
-                    let (chunk, rest) = LBS.splitAt size remainder
-                        (next,  bs)   = f prev (LBS.toStrict chunk)
-                    Ref.writeIORef ref (next, rest)
-                    pure bs
+                    let (x,    xs) = LBS.splitAt size remainder
+                        (next, y)  = f prev (LBS.toStrict x)
+                    Ref.writeIORef ref (next, xs)
+                    pure y
 
     readAll :: GivesPopper () -> IO Builder
     readAll givesPopper = do
