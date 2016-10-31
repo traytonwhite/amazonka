@@ -746,7 +746,7 @@ directed :: (HasMetadata a Identity, TypeOf b)
          -> b
          -> Type
 directed i m d (typeOf -> t) = case t of
-    TType      x _ -> tycon x
+    TType      x _ -> tycon (typeId x)
     TLit       x   -> literal i (m ^. timestampFormat . _Identity) x
     TNatural       -> tycon nat
     TStream        -> tycon stream

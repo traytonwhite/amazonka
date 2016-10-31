@@ -76,7 +76,7 @@ instance FromJSON Replace where
 
 instance TypeOf Replace where
     typeOf Replace {..} =
-        TType (typeId _replaceName) (uniq (_replaceDeriving <> derivingBase))
+        TType _replaceName (uniq (_replaceDeriving <> derivingBase))
 
 data Override = Override
     { _renamedTo      :: Maybe Id      -- ^ Rename type

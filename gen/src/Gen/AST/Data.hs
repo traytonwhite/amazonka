@@ -72,8 +72,8 @@ operationData cfg m o = do
         <$> renderInsts p xn xis
 
     return $! o
-        { _opInput  = Identity $ Prod (xa & relShared .~ 0) xd xis'
-        , _opOutput = Identity $ Prod ya                    yd yis'
+        { _opInput  = Identity $ Prod (xa & relShared .~ mempty) xd xis'
+        , _opOutput = Identity $ Prod ya                         yd yis'
         }
   where
     struct (a :< Struct s) = Right (a, s)

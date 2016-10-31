@@ -51,8 +51,8 @@ instance HasId a => TypeOf (Shape a) where
 
         shape = \case
             Ptr _ t              -> t
-            Struct st            -> TType  (typeId n) (struct st)
-            Enum   {}            -> TType  (typeId n) (enum <> derivingBase)
+            Struct st            -> TType  n (struct st)
+            Enum   {}            -> TType  n (enum <> derivingBase)
             List (ListF i e)
                 | nonEmpty i     -> TList1 (typeOf e)
                 | otherwise      -> TList  (typeOf e)
@@ -91,7 +91,7 @@ pointerTo n = \case
     Map (MapF _ k v)     -> TMap   (t (_refShape k)) (t (_refShape v))
     _                    -> t n
   where
-    t x = TType (typeId x) derivingBase
+    t x = TType x derivingBase
 
 derivingOf :: TypeOf a => a -> [Derive]
 derivingOf = uniq . typ . typeOf

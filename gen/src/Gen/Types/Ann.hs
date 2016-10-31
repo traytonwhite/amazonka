@@ -40,6 +40,16 @@ data Direction
 
 instance Hashable Direction
 
+data Sharing
+    = Orphan
+    | Singular
+    | Plural
+      deriving (Eq, Show)
+
+instance Monoid Sharing where
+    mempty      = Orphan
+    mappend _ _ = Plural
+
 data Mode
     = Bi
     | Uni !Direction
@@ -52,32 +62,27 @@ instance Monoid Mode where
     mappend _       _       = Bi
 
 data Relation = Relation
-    { _relShared :: !Int -- FIXME: get around to using something more sensible.
+    { _relShared :: !Sharing
     , _relMode   :: !Mode
     } deriving (Eq, Show)
 
 makeClassy ''Relation
 
 instance Monoid Relation where
-    mempty      = Relation 0 mempty
-    mappend a b = Relation (on add _relShared b a) (on (<>) _relMode b a)
-      where
-        add 0 0 = 2
-        add 1 0 = 2
-        add 0 1 = 2
-        add x y = x + y
+    mempty      = Relation mempty mempty
+    mappend a b = Relation (on (<>) _relShared b a) (on (<>) _relMode b a)
 
 instance (Functor f, HasRelation a) => HasRelation (Cofree f a) where
     relation = lens extract (flip (:<) . unwrap) . relation
 
 mkRelation :: Maybe Id -> Direction -> Relation
-mkRelation p = Relation (maybe 0 (const 1) p) . Uni
+mkRelation p = Relation (maybe Orphan (const Singular) p) . Uni
 
 isShared :: HasRelation a => a -> Bool
-isShared = (> 1) . view relShared
+isShared = (/= Orphan) . view relShared
 
 isOrphan :: HasRelation a => a -> Bool
-isOrphan = (== 0) . view relShared
+isOrphan = (== Orphan) . view relShared
 
 data Derive
     = DEq
@@ -123,7 +128,7 @@ data Lit
       deriving (Eq, Show)
 
 data TType
-    = TType      Text [Derive]
+    = TType      Id [Derive]
     | TLit       Lit
     | TNatural
     | TStream
