@@ -25,12 +25,14 @@ module Gen.Tree
     ) where
 
 import           Control.Error
-import           Control.Lens              (each, (^.), (^..))
+import           Control.Lens              (each, (%~), (&), (^.), (^..))
 import           Control.Monad
 import           Control.Monad.Except
 import           Data.Aeson                hiding (json)
 import           Data.Bifunctor
 import           Data.Functor.Identity
+import qualified Data.HashMap.Strict       as Map
+import qualified Data.HashSet              as Set
 import           Data.Monoid
 import           Data.Text                 (Text)
 import qualified Data.Text                 as Text
@@ -40,7 +42,7 @@ import           Gen.Formatting            (failure, shown)
 import           Gen.Import
 import qualified Gen.JSON                  as JS
 import           Gen.Types
-import           Prelude                   hiding (mod)
+import           Prelude                   hiding (mod, product, sum)
 import           System.Directory.Tree     hiding (file)
 import           Text.EDE                  hiding (failure, render)
 
@@ -81,14 +83,13 @@ populate d Templates{..} l = (encodeString d :/) . dir lib <$> layout
             [ dir "Network"
                 [ dir "AWS"
                     [ dir svc $
-                        [ dir "Types"
-                            [ mod (l ^. sumNS) (sumImports l) sumTemplate
-                            , mod (l ^. productNS) (productImports l) productTemplate
-                            ]
-                        , mod (l ^. typesNS) (typeImports l) typesTemplate
-                        , mod (l ^. waitersNS) (waiterImports l) waitersTemplate
+                        [ dir "Types" $
+                               sums     (Map.toList (_sums'     l))
+                            ++ products (Map.toList (_products' l))
+                        , mod (typesNS   l) (typeImports   l) typesTemplate
+                        , mod (waitersNS l) (waiterImports l) waitersTemplate
                         ] ++ map op (l ^.. operations . each)
-                    , mod (l ^. libraryNS) mempty tocTemplate
+                    , mod (libraryNS l) mempty tocTemplate
                     ]
                 ]
             ]
@@ -102,7 +103,7 @@ populate d Templates{..} l = (encodeString d :/) . dir lib <$> layout
                         [ touch "Internal.hs"
                         ]
                     , dir "Gen"
-                        [ mod (l ^. fixturesNS) (fixtureImports l) fixturesTemplate
+                        [ mod (fixturesNS l) (fixtureImports l) fixturesTemplate
                         ]
                     ]
                 ]
@@ -118,6 +119,27 @@ populate d Templates{..} l = (encodeString d :/) . dir lib <$> layout
     svc, lib :: Path
     svc = fromText (l ^. serviceAbbrev)
     lib = fromText (l ^. libraryName)
+
+    sums = \case
+        []  -> []
+        [x] -> [go x]
+        xs  -> [dir "Sum" (map go xs)]
+      where
+        go (n, ks) =
+            write $ module' n (sumImports l) sumTemplate $
+                pure (toJSON (filteredShapes ks))
+
+    products = \case
+        []  -> []
+        [x] -> [go x]
+        xs  -> [dir "Product" (map go xs)]
+      where
+        go (n, ks) =
+            write $ module' n (productImports l) productTemplate $
+                pure (toJSON (filteredShapes ks))
+
+    filteredShapes ks =
+        l & service' . shapes %~ Map.filterWithKey (const . flip Set.member ks)
 
     op :: Operation Identity SData a -> DirTree (Either Error Touch)
     op = write . operation' l operationTemplate
@@ -148,7 +170,7 @@ operation' l t o = module' n is t $ do
     y <- JS.objectErr "metadata" (toJSON m)
     return $! y <> x
   where
-    n  = operationNS (l ^. libraryNS) (o ^. opName)
+    n  = operationNS (libraryNS l) (o ^. opName)
     m  = l ^. metadata
 
     is = operationImports l o

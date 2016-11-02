@@ -106,6 +106,16 @@ data SData
       -- ^ A function declaration.
       deriving (Eq, Show)
 
+isSum :: SData -> Bool
+isSum = \case
+    Sum{} -> True
+    _     -> False
+
+isProduct :: SData -> Bool
+isProduct = \case
+    Prod{} -> True
+    _      -> False
+
 instance Ord SData where
     compare a b =
         case (a, b) of

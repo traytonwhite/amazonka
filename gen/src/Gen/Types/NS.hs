@@ -1,4 +1,5 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
 
 -- Module      : Gen.Types.NS
 -- Copyright   : (c) 2013-2016 Brendan Hay
@@ -13,6 +14,7 @@
 module Gen.Types.NS where
 
 import           Data.Aeson
+import           Data.Hashable             (Hashable)
 import           Data.Monoid
 import           Data.String
 import           Data.Text                 (Text)
@@ -20,7 +22,7 @@ import qualified Data.Text                 as Text
 import qualified Filesystem.Path.CurrentOS as Path
 
 newtype NS = NS [Text]
-    deriving (Eq, Ord, Show)
+    deriving (Eq, Ord, Show, Hashable)
 
 mkNS :: Text -> NS
 mkNS = NS . Text.splitOn "."

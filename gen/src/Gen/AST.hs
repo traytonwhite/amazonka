@@ -16,21 +16,22 @@
 
 module Gen.AST where
 
-import           Control.Arrow
+import           Control.Arrow        ((&&&))
 import           Control.Error
 import           Control.Lens
 import           Control.Monad.Except (throwError)
 import           Control.Monad.State
+import           Data.Bifunctor       (first)
 import qualified Data.HashMap.Strict  as Map
 import qualified Data.HashSet         as Set
-import           Data.Monoid
+import           Data.Monoid          ((<>))
+import           Data.String          (fromString)
 import           Gen.AST.Cofree
 import           Gen.AST.Data
 import           Gen.AST.Override
 import           Gen.AST.Prefix
 import           Gen.AST.Subst
-import           Gen.Types.TypeOf
-import           Gen.Formatting
+import           Gen.Formatting       hiding (second)
 import           Gen.Types
 
 -- FIXME: Relations need to be updated by the solving step.
@@ -41,7 +42,85 @@ rewrite :: Versions
         -> Either Error Library
 rewrite v cfg s' = do
     s <- rewriteService cfg (ignore cfg (deprecate s')) >>= renderShapes cfg
-    Library v cfg s <$> serviceData (s ^. metadata) (s ^. retry)
+    f <- serviceData (s ^. metadata) (s ^. retry)
+    pure $! Library v cfg s f (splitSums s) (splitProducts s)
+
+splitProducts :: Service f a SData c -> Map NS (Set Id)
+splitProducts s
+    | total <= bucket = Map.singleton ns (Set.fromList sdata)
+    | otherwise       = Map.fromList $ zipWith (curry label) [1..] groups
+  where
+    label :: (Int, a) -> (NS, a)
+    label = first (mappend ns . fromString . ('T':) . show)
+
+    groups :: [Set Id]
+    groups = map Set.fromList $ groupsOf (ceiling i) sdata
+      where
+        i :: Double
+        i = fromIntegral total / fromIntegral (n + if r > 0 then 1 else 0)
+
+        (n, r) = total `divMod` bucket
+
+    total  = length sdata
+    sdata  = Map.keys $ Map.filter isProduct (_shapes s)
+    ns     = typesNS s <> "Product"
+    bucket = 50
+
+splitSums :: Service f a SData c -> Map NS (Set Id)
+splitSums s
+    | total <= bucket = Map.singleton ns (Set.fromList sdata)
+    | otherwise       = Map.fromList $ zipWith (curry label) [1..] groups
+  where
+    label :: (Int, a) -> (NS, a)
+    label = first (mappend ns . fromString . ('T':) . show)
+
+    groups :: [Set Id]
+    groups = map Set.fromList $ groupsOf (ceiling i) sdata
+      where
+        i :: Double
+        i = fromIntegral total / fromIntegral (n + if r > 0 then 1 else 0)
+
+        (n, r) = total `divMod` bucket
+
+    total  = length sdata
+    sdata  = Map.keys $ Map.filter isSum (_shapes s)
+    ns     = typesNS s <> "Sum"
+    bucket = 80
+
+groupsOf :: Int -> [a] -> [[a]]
+groupsOf _ [] = []
+groupsOf n xs
+    | n > 0     = take n xs : groupsOf n (drop n xs)
+    | otherwise = [xs]
+
+-- related :: Service f a (Shape Related) c -> Map Char (Set Id)
+-- related = flip execState mempty . go 'A' . Map.toList . _shapes
+--   where
+--     go :: (Enum a, Hashable a, Eq a)
+--        => a
+--        -> [(Id, Shape Related)]
+--        -> State (Map a (Set Id)) ()
+--     go _      []          = pure ()
+--     go bucket ((k, v):xs) = do
+--         members <- gets (fromMaybe mempty . Map.lookup bucket)
+--         if | k `Set.member` members             -> go bucket xs
+--            | Set.size members > shapesPerBucket -> go (succ bucket) ((k, v):xs)
+--            | otherwise                          -> do
+--                -- case v of
+
+--                go bucket xs
+
+--     -- 1. determine maximum number of shapes per bucket
+--     -- 2. iterate shapes and add them and their dependents
+--     --    to the bucket.
+--     -- 3. when the current bucket overflows, continue adding until a shape is
+--     --    found that has no dependents, and start adding to a new bucket.
+--     -- 4. repeat until all shapes are exhausted.
+
+--     shapesPerBucket = 100
+
+--     -- sums = Map.filter isSum (_shapes s)
+--     -- len  = Map.length sums
 
 deprecate :: Service f a b c -> Service f a b c
 deprecate = operations %~ Map.filter (not . view opDeprecated)

@@ -32,6 +32,7 @@ module Gen.Types.Config where
 import           Control.Error
 import           Control.Lens              hiding ((.=))
 import           Data.Aeson
+import qualified Data.HashMap.Strict       as Map
 import           Data.List                 (nub, sort, sortOn)
 import           Data.Monoid               hiding (Product, Sum)
 import           Data.Ord
@@ -156,6 +157,8 @@ data Library = Library
     , _config'   :: Config
     , _service'  :: Service Identity SData SData WData
     , _instance' :: Fun
+    , _sums'     :: Map NS (Set Id) -- ^ Module to sum type identifier.
+    , _products' :: Map NS (Set Id) -- ^ Module to product type identifier.
     }
 
 makeLenses ''Library
@@ -181,15 +184,15 @@ instance ToJSON Library where
             , "cabalDescription"  .= Desc 4 (l ^. documentation)
             , "documentation"     .= (l ^. documentation)
             , "libraryName"       .= (l ^. libraryName)
-            , "libraryNamespace"  .= (l ^. libraryNS)
+            , "libraryNamespace"  .= libraryNS l
             , "libraryVersion"    .= (l ^. libraryVersion)
             , "clientVersion"     .= (l ^. clientVersion)
             , "coreVersion"       .= (l ^. coreVersion)
             , "serviceInstance"   .= (l ^.  instance')
             , "typeModules"       .= sort (l ^. typeModules)
             , "operationModules"  .= sort (l ^. operationModules)
-            , "exposedModules"    .= sort (l ^. exposedModules)
-            , "otherModules"      .= sort (l ^. otherModules)
+            , "exposedModules"    .= sort (exposedModules l)
+            , "otherModules"      .= sort (otherModules l)
             , "extraDependencies" .= sort (l ^. extraDependencies)
             , "operations"        .= (l ^.. operations . each)
             , "shapes"            .= sort (l ^.. shapes . each)
@@ -197,30 +200,29 @@ instance ToJSON Library where
             ]
 
 -- FIXME: Remove explicit construction of getters, just use functions.
-libraryNS, typesNS, sumNS, productNS, waitersNS, fixturesNS :: Getter Library NS
-libraryNS  = serviceAbbrev . to (mappend "Network.AWS"  . mkNS)
-typesNS    = libraryNS     . to (<> "Types")
-sumNS      = typesNS       . to (<> "Sum")
-productNS  = typesNS       . to (<> "Product")
-waitersNS  = libraryNS     . to (<> "Waiters")
-fixturesNS = serviceAbbrev . to (mappend "Test.AWS.Gen" . mkNS)
+libraryNS, typesNS, waitersNS, fixturesNS :: HasMetadata a f => a -> NS
+libraryNS  = mappend "Network.AWS" . mkNS . view serviceAbbrev
+typesNS    = (<> "Types") . libraryNS
+waitersNS  = (<> "Waiters") . libraryNS
+fixturesNS = mappend "Test.AWS.Gen" . mkNS . view serviceAbbrev
 
-otherModules :: Getter Library [NS]
-otherModules = to f
-  where
-    f x = x ^. sumNS
-        : x ^. productNS
-        : x ^. operationModules
-       <> x ^. typeModules
+sumNSs, productNSs :: Library -> [NS]
+sumNSs     = Map.keys . _sums'
+productNSs = Map.keys . _products'
 
-exposedModules :: Getter Library [NS]
-exposedModules = to f
-  where
-    f x =
-        let ns = x ^. libraryNS
-         in x ^.  typesNS
-          : x ^.  waitersNS
-          : x ^.. operations . each . to (operationNS ns . view opName)
+otherModules :: Library -> [NS]
+otherModules l =
+      sumNSs l
+   <> productNSs l
+   <> l ^. operationModules
+   <> l ^. typeModules
+
+exposedModules :: Library -> [NS]
+exposedModules l =
+    let ns = libraryNS l
+     in typesNS l
+      : waitersNS l
+      : l ^.. operations . each . to (operationNS ns . view opName)
 
 data Templates = Templates
     { cabalTemplate     :: Template

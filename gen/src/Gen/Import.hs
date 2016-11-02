@@ -26,9 +26,9 @@ operationImports l o = sort $
     : "Network.AWS.Response"
     : "Network.AWS.Lens"
     : "Network.AWS.Prelude"
-    : l ^. typesNS
-    : l ^. productNS
-    : l ^. operationModules
+    : typesNS l
+    : productNSs l
+   ++ l ^. operationModules
    ++ maybeToList (const "Network.AWS.Pager" <$> o ^. opPager)
 
 typeImports :: Library -> [NS]
@@ -36,9 +36,9 @@ typeImports l = sort $
       "Network.AWS.Lens"
     : "Network.AWS.Prelude"
     : signatureImport (l ^. signatureVersion)
-    : l ^. sumNS
-    : l ^. productNS
-    : l ^. typeModules
+    : sumNSs l
+   ++ productNSs l
+   ++ l ^. typeModules
 
 sumImports :: Library -> [NS]
 sumImports l = sort $
@@ -49,18 +49,18 @@ productImports :: Library -> [NS]
 productImports l = sort $
       "Network.AWS.Lens"
     : "Network.AWS.Prelude"
-    : l ^. sumNS
-    : l ^. typeModules
+    : sumNSs l
+   ++ l ^. typeModules
 
 waiterImports :: Library -> [NS]
 waiterImports l = sort $
       "Network.AWS.Lens"
     : "Network.AWS.Prelude"
     : "Network.AWS.Waiter"
-    : l ^. typesNS
+    : typesNS l
     : map (operationNS ns . _waitOpName) (l ^.. waiters . each)
   where
-    ns = l ^. libraryNS
+    ns = libraryNS l
 
 signatureImport :: Signature -> NS
 signatureImport = \case
@@ -75,6 +75,6 @@ testImports l =
 
 fixtureImports :: Library -> [NS]
 fixtureImports l =
-    [ l ^. libraryNS
+    [ libraryNS l
     , mkNS $ "Test.AWS." <> l ^. serviceAbbrev <> ".Internal"
     ]
