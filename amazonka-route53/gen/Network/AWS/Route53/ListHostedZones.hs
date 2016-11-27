@@ -83,7 +83,7 @@ import           Network.AWS.Route53.Types.Product
 --
 -- /See:/ 'listHostedZones' smart constructor.
 data ListHostedZones = ListHostedZones'
-    { _lhzDelegationSetId :: !(Maybe Text)
+    { _lhzDelegationSetId :: !(Maybe ResourceId)
     , _lhzMarker          :: !(Maybe Text)
     , _lhzMaxItems        :: !(Maybe Text)
     } deriving (Eq,Read,Show,Data,Typeable,Generic)
@@ -107,7 +107,7 @@ listHostedZones =
     }
 
 -- | Undocumented member.
-lhzDelegationSetId :: Lens' ListHostedZones (Maybe Text)
+lhzDelegationSetId :: Lens' ListHostedZones (Maybe ResourceId)
 lhzDelegationSetId = lens _lhzDelegationSetId (\ s a -> s{_lhzDelegationSetId = a});
 
 -- | (Optional) If you have more hosted zones than the value of 'maxitems', 'ListHostedZones' returns only the first 'maxitems' hosted zones. To get the next group of 'maxitems' hosted zones, submit another request to 'ListHostedZones'. For the value of marker, specify the value of the 'NextMarker' element that was returned in the previous response.

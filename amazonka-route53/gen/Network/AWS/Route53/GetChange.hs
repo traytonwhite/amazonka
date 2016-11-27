@@ -51,7 +51,7 @@ import           Network.AWS.Route53.Types.Product
 --
 -- /See:/ 'getChange' smart constructor.
 newtype GetChange = GetChange'
-    { _gcId :: Text
+    { _gcId :: ResourceId
     } deriving (Eq,Read,Show,Data,Typeable,Generic)
 
 -- | Creates a value of 'GetChange' with the minimum fields required to make a request.
@@ -60,7 +60,7 @@ newtype GetChange = GetChange'
 --
 -- * 'gcId'
 getChange
-    :: Text -- ^ 'gcId'
+    :: ResourceId -- ^ 'gcId'
     -> GetChange
 getChange pId_ =
     GetChange'
@@ -68,7 +68,7 @@ getChange pId_ =
     }
 
 -- | The ID of the change batch request. The value that you specify here is the value that 'ChangeResourceRecordSets' returned in the Id element when you submitted the request.
-gcId :: Lens' GetChange Text
+gcId :: Lens' GetChange ResourceId
 gcId = lens _gcId (\ s a -> s{_gcId = a});
 
 instance AWSRequest GetChange where

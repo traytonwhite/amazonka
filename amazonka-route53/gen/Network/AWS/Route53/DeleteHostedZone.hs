@@ -48,7 +48,7 @@ import           Network.AWS.Route53.Types.Product
 --
 -- /See:/ 'deleteHostedZone' smart constructor.
 newtype DeleteHostedZone = DeleteHostedZone'
-    { _dhzId :: Text
+    { _dhzId :: ResourceId
     } deriving (Eq,Read,Show,Data,Typeable,Generic)
 
 -- | Creates a value of 'DeleteHostedZone' with the minimum fields required to make a request.
@@ -57,7 +57,7 @@ newtype DeleteHostedZone = DeleteHostedZone'
 --
 -- * 'dhzId'
 deleteHostedZone
-    :: Text -- ^ 'dhzId'
+    :: ResourceId -- ^ 'dhzId'
     -> DeleteHostedZone
 deleteHostedZone pId_ =
     DeleteHostedZone'
@@ -65,7 +65,7 @@ deleteHostedZone pId_ =
     }
 
 -- | The ID of the hosted zone you want to delete.
-dhzId :: Lens' DeleteHostedZone Text
+dhzId :: Lens' DeleteHostedZone ResourceId
 dhzId = lens _dhzId (\ s a -> s{_dhzId = a});
 
 instance AWSRequest DeleteHostedZone where

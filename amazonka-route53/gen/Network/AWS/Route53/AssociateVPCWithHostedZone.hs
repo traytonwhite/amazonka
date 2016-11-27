@@ -55,7 +55,7 @@ import           Network.AWS.Route53.Types.Product
 -- /See:/ 'associateVPCWithHostedZone' smart constructor.
 data AssociateVPCWithHostedZone = AssociateVPCWithHostedZone'
     { _avwhzComment      :: !(Maybe Text)
-    , _avwhzHostedZoneId :: !Text
+    , _avwhzHostedZoneId :: !ResourceId
     , _avwhzVPC          :: !VPC
     } deriving (Eq,Read,Show,Data,Typeable,Generic)
 
@@ -69,7 +69,7 @@ data AssociateVPCWithHostedZone = AssociateVPCWithHostedZone'
 --
 -- * 'avwhzVPC'
 associateVPCWithHostedZone
-    :: Text -- ^ 'avwhzHostedZoneId'
+    :: ResourceId -- ^ 'avwhzHostedZoneId'
     -> VPC -- ^ 'avwhzVPC'
     -> AssociateVPCWithHostedZone
 associateVPCWithHostedZone pHostedZoneId_ pVPC_ =
@@ -86,7 +86,7 @@ avwhzComment = lens _avwhzComment (\ s a -> s{_avwhzComment = a});
 -- | The ID of the hosted zone you want to associate your VPC with.
 --
 -- Note that you cannot associate a VPC with a hosted zone that doesn\'t have an existing VPC association.
-avwhzHostedZoneId :: Lens' AssociateVPCWithHostedZone Text
+avwhzHostedZoneId :: Lens' AssociateVPCWithHostedZone ResourceId
 avwhzHostedZoneId = lens _avwhzHostedZoneId (\ s a -> s{_avwhzHostedZoneId = a});
 
 -- | A complex type containing information about the Amazon VPC that you\'re associating with the specified hosted zone.

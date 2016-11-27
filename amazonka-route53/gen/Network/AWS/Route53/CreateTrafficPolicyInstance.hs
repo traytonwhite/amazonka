@@ -53,7 +53,7 @@ import           Network.AWS.Route53.Types.Product
 --
 -- /See:/ 'createTrafficPolicyInstance' smart constructor.
 data CreateTrafficPolicyInstance = CreateTrafficPolicyInstance'
-    { _ctpiHostedZoneId         :: !Text
+    { _ctpiHostedZoneId         :: !ResourceId
     , _ctpiName                 :: !Text
     , _ctpiTTL                  :: !Nat
     , _ctpiTrafficPolicyId      :: !Text
@@ -74,7 +74,7 @@ data CreateTrafficPolicyInstance = CreateTrafficPolicyInstance'
 --
 -- * 'ctpiTrafficPolicyVersion'
 createTrafficPolicyInstance
-    :: Text -- ^ 'ctpiHostedZoneId'
+    :: ResourceId -- ^ 'ctpiHostedZoneId'
     -> Text -- ^ 'ctpiName'
     -> Natural -- ^ 'ctpiTTL'
     -> Text -- ^ 'ctpiTrafficPolicyId'
@@ -90,7 +90,7 @@ createTrafficPolicyInstance pHostedZoneId_ pName_ pTTL_ pTrafficPolicyId_ pTraff
     }
 
 -- | The ID of the hosted zone in which you want Amazon Route 53 to create resource record sets by using the configuration in a traffic policy.
-ctpiHostedZoneId :: Lens' CreateTrafficPolicyInstance Text
+ctpiHostedZoneId :: Lens' CreateTrafficPolicyInstance ResourceId
 ctpiHostedZoneId = lens _ctpiHostedZoneId (\ s a -> s{_ctpiHostedZoneId = a});
 
 -- | The domain name (such as example.com) or subdomain name (such as www.example.com) for which Amazon Route 53 responds to DNS queries by using the resource record sets that Amazon Route 53 creates for this traffic policy instance.

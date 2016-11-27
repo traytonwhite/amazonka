@@ -80,7 +80,7 @@ data TestDNSAnswer = TestDNSAnswer'
     { _tdaResolverIP            :: !(Maybe Text)
     , _tdaEDNS0ClientSubnetIP   :: !(Maybe Text)
     , _tdaEDNS0ClientSubnetMask :: !(Maybe Text)
-    , _tdaHostedZoneId          :: !Text
+    , _tdaHostedZoneId          :: !ResourceId
     , _tdaRecordName            :: !Text
     , _tdaRecordType            :: !RecordType
     } deriving (Eq,Read,Show,Data,Typeable,Generic)
@@ -101,7 +101,7 @@ data TestDNSAnswer = TestDNSAnswer'
 --
 -- * 'tdaRecordType'
 testDNSAnswer
-    :: Text -- ^ 'tdaHostedZoneId'
+    :: ResourceId -- ^ 'tdaHostedZoneId'
     -> Text -- ^ 'tdaRecordName'
     -> RecordType -- ^ 'tdaRecordType'
     -> TestDNSAnswer
@@ -128,7 +128,7 @@ tdaEDNS0ClientSubnetMask :: Lens' TestDNSAnswer (Maybe Text)
 tdaEDNS0ClientSubnetMask = lens _tdaEDNS0ClientSubnetMask (\ s a -> s{_tdaEDNS0ClientSubnetMask = a});
 
 -- | Undocumented member.
-tdaHostedZoneId :: Lens' TestDNSAnswer Text
+tdaHostedZoneId :: Lens' TestDNSAnswer ResourceId
 tdaHostedZoneId = lens _tdaHostedZoneId (\ s a -> s{_tdaHostedZoneId = a});
 
 -- | Undocumented member.

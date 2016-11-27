@@ -81,7 +81,7 @@ data ListTrafficPolicyInstancesByHostedZone = ListTrafficPolicyInstancesByHosted
     { _ltpibhzTrafficPolicyInstanceTypeMarker :: !(Maybe RecordType)
     , _ltpibhzMaxItems                        :: !(Maybe Text)
     , _ltpibhzTrafficPolicyInstanceNameMarker :: !(Maybe Text)
-    , _ltpibhzHostedZoneId                    :: !Text
+    , _ltpibhzHostedZoneId                    :: !ResourceId
     } deriving (Eq,Read,Show,Data,Typeable,Generic)
 
 -- | Creates a value of 'ListTrafficPolicyInstancesByHostedZone' with the minimum fields required to make a request.
@@ -96,7 +96,7 @@ data ListTrafficPolicyInstancesByHostedZone = ListTrafficPolicyInstancesByHosted
 --
 -- * 'ltpibhzHostedZoneId'
 listTrafficPolicyInstancesByHostedZone
-    :: Text -- ^ 'ltpibhzHostedZoneId'
+    :: ResourceId -- ^ 'ltpibhzHostedZoneId'
     -> ListTrafficPolicyInstancesByHostedZone
 listTrafficPolicyInstancesByHostedZone pHostedZoneId_ =
     ListTrafficPolicyInstancesByHostedZone'
@@ -129,7 +129,7 @@ ltpibhzTrafficPolicyInstanceNameMarker :: Lens' ListTrafficPolicyInstancesByHost
 ltpibhzTrafficPolicyInstanceNameMarker = lens _ltpibhzTrafficPolicyInstanceNameMarker (\ s a -> s{_ltpibhzTrafficPolicyInstanceNameMarker = a});
 
 -- | The ID of the hosted zone for which you want to list traffic policy instances.
-ltpibhzHostedZoneId :: Lens' ListTrafficPolicyInstancesByHostedZone Text
+ltpibhzHostedZoneId :: Lens' ListTrafficPolicyInstancesByHostedZone ResourceId
 ltpibhzHostedZoneId = lens _ltpibhzHostedZoneId (\ s a -> s{_ltpibhzHostedZoneId = a});
 
 instance AWSRequest

@@ -83,7 +83,7 @@ instance ToXML AlarmIdentifier where
 --
 -- /See:/ 'aliasTarget' smart constructor.
 data AliasTarget = AliasTarget'
-    { _atHostedZoneId         :: !Text
+    { _atHostedZoneId         :: !ResourceId
     , _atDNSName              :: !Text
     , _atEvaluateTargetHealth :: !Bool
     } deriving (Eq,Read,Show,Data,Typeable,Generic)
@@ -98,7 +98,7 @@ data AliasTarget = AliasTarget'
 --
 -- * 'atEvaluateTargetHealth'
 aliasTarget
-    :: Text -- ^ 'atHostedZoneId'
+    :: ResourceId -- ^ 'atHostedZoneId'
     -> Text -- ^ 'atDNSName'
     -> Bool -- ^ 'atEvaluateTargetHealth'
     -> AliasTarget
@@ -134,7 +134,7 @@ aliasTarget pHostedZoneId_ pDNSName_ pEvaluateTargetHealth_ =
 -- [Another Amazon Route 53 resource record set in your hosted zone]
 --     Specify the hosted zone ID of your hosted zone. (An alias resource record set cannot reference a resource record set in a different hosted zone.)
 --
-atHostedZoneId :: Lens' AliasTarget Text
+atHostedZoneId :: Lens' AliasTarget ResourceId
 atHostedZoneId = lens _atHostedZoneId (\ s a -> s{_atHostedZoneId = a});
 
 -- | /Alias resource record sets only:/ The value that you specify depends on where you want to route queries:
@@ -314,7 +314,7 @@ instance ToXML ChangeBatch where
 -- /See:/ 'changeInfo' smart constructor.
 data ChangeInfo = ChangeInfo'
     { _ciComment     :: !(Maybe Text)
-    , _ciId          :: !Text
+    , _ciId          :: !ResourceId
     , _ciStatus      :: !ChangeStatus
     , _ciSubmittedAt :: !ISO8601
     } deriving (Eq,Read,Show,Data,Typeable,Generic)
@@ -331,7 +331,7 @@ data ChangeInfo = ChangeInfo'
 --
 -- * 'ciSubmittedAt'
 changeInfo
-    :: Text -- ^ 'ciId'
+    :: ResourceId -- ^ 'ciId'
     -> ChangeStatus -- ^ 'ciStatus'
     -> UTCTime -- ^ 'ciSubmittedAt'
     -> ChangeInfo
@@ -350,7 +350,7 @@ ciComment :: Lens' ChangeInfo (Maybe Text)
 ciComment = lens _ciComment (\ s a -> s{_ciComment = a});
 
 -- | The ID of the request.
-ciId :: Lens' ChangeInfo Text
+ciId :: Lens' ChangeInfo ResourceId
 ciId = lens _ciId (\ s a -> s{_ciId = a});
 
 -- | The current state of the request. 'PENDING' indicates that this request has not yet been applied to all Amazon Route 53 DNS servers.
@@ -478,7 +478,7 @@ instance NFData CloudWatchAlarmConfiguration
 --
 -- /See:/ 'delegationSet' smart constructor.
 data DelegationSet = DelegationSet'
-    { _dsId              :: !(Maybe Text)
+    { _dsId              :: !(Maybe ResourceId)
     , _dsCallerReference :: !(Maybe Text)
     , _dsNameServers     :: !(List1 Text)
     } deriving (Eq,Read,Show,Data,Typeable,Generic)
@@ -503,7 +503,7 @@ delegationSet pNameServers_ =
     }
 
 -- | Undocumented member.
-dsId :: Lens' DelegationSet (Maybe Text)
+dsId :: Lens' DelegationSet (Maybe ResourceId)
 dsId = lens _dsId (\ s a -> s{_dsId = a});
 
 -- | Undocumented member.
@@ -1102,7 +1102,7 @@ instance NFData HealthCheckObservation
 data HostedZone = HostedZone'
     { _hzConfig                 :: !(Maybe HostedZoneConfig)
     , _hzResourceRecordSetCount :: !(Maybe Integer)
-    , _hzId                     :: !Text
+    , _hzId                     :: !ResourceId
     , _hzName                   :: !Text
     , _hzCallerReference        :: !Text
     } deriving (Eq,Read,Show,Data,Typeable,Generic)
@@ -1121,7 +1121,7 @@ data HostedZone = HostedZone'
 --
 -- * 'hzCallerReference'
 hostedZone
-    :: Text -- ^ 'hzId'
+    :: ResourceId -- ^ 'hzId'
     -> Text -- ^ 'hzName'
     -> Text -- ^ 'hzCallerReference'
     -> HostedZone
@@ -1143,7 +1143,7 @@ hzResourceRecordSetCount :: Lens' HostedZone (Maybe Integer)
 hzResourceRecordSetCount = lens _hzResourceRecordSetCount (\ s a -> s{_hzResourceRecordSetCount = a});
 
 -- | The ID that Amazon Route 53 assigned to the hosted zone when you created it.
-hzId :: Lens' HostedZone Text
+hzId :: Lens' HostedZone ResourceId
 hzId = lens _hzId (\ s a -> s{_hzId = a});
 
 -- | The name of the domain. For public hosted zones, this is the name that you have registered with your DNS registrar.
@@ -1789,7 +1789,7 @@ instance NFData TrafficPolicy
 -- | /See:/ 'trafficPolicyInstance' smart constructor.
 data TrafficPolicyInstance = TrafficPolicyInstance'
     { _tpiId                   :: !Text
-    , _tpiHostedZoneId         :: !Text
+    , _tpiHostedZoneId         :: !ResourceId
     , _tpiName                 :: !Text
     , _tpiTTL                  :: !Nat
     , _tpiState                :: !Text
@@ -1822,7 +1822,7 @@ data TrafficPolicyInstance = TrafficPolicyInstance'
 -- * 'tpiTrafficPolicyType'
 trafficPolicyInstance
     :: Text -- ^ 'tpiId'
-    -> Text -- ^ 'tpiHostedZoneId'
+    -> ResourceId -- ^ 'tpiHostedZoneId'
     -> Text -- ^ 'tpiName'
     -> Natural -- ^ 'tpiTTL'
     -> Text -- ^ 'tpiState'
@@ -1849,7 +1849,7 @@ tpiId :: Lens' TrafficPolicyInstance Text
 tpiId = lens _tpiId (\ s a -> s{_tpiId = a});
 
 -- | Undocumented member.
-tpiHostedZoneId :: Lens' TrafficPolicyInstance Text
+tpiHostedZoneId :: Lens' TrafficPolicyInstance ResourceId
 tpiHostedZoneId = lens _tpiHostedZoneId (\ s a -> s{_tpiHostedZoneId = a});
 
 -- | Undocumented member.
